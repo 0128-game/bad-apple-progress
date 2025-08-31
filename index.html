@@ -197,8 +197,8 @@
     </div>
     
     <form name="progress" data-netlify="true" hidden>
-        <input type="text" name="remaining_count" id="form-remaining-count">
-        <input type="text" name="step_title" id="form-step-title">
+        <input type="text" name="remaining_count">
+        <input type="text" name="step_title">
     </form>
 
     <script>
@@ -245,28 +245,29 @@
                 const remaining = parseInt(remainingCountElement.textContent);
                 const step = stepTitleElement.textContent;
                 
-                // フォームの入力フィールドに値を設定
-                document.getElementById('form-remaining-count').value = remaining;
-                document.getElementById('form-step-title').value = step;
+                // データオブジェクトを作成
+                const data = {
+                    'remaining_count': remaining,
+                    'step_title': step
+                };
                 
-                // フォームを取得
-                const form = document.querySelector('form[name="progress"]');
-                const formData = new FormData(form);
-                
-                // Netlifyにフォームを送信
                 try {
-                    const response = await fetch(form.action || '/', {
+                    const response = await fetch('/', {
                         method: 'POST',
-                        body: new URLSearchParams(formData).toString()
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data)
                     });
 
                     if (response.ok) {
                         alert('変更を保存しました。');
                     } else {
+                        console.error('サーバーエラー:', response.status, response.statusText);
                         alert('保存に失敗しました。');
                     }
                 } catch (error) {
-                    console.error('保存エラー:', error);
+                    console.error('ネットワークエラー:', error);
                     alert('保存に失敗しました。');
                 }
             }
