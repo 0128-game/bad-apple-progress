@@ -195,6 +195,11 @@
             <button id="cancel-password">キャンセル</button>
         </div>
     </div>
+    
+    <form name="progress" data-netlify="true" hidden>
+        <input type="text" name="remaining_count" id="form-remaining-count">
+        <input type="text" name="step_title" id="form-step-title">
+    </form>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -219,6 +224,9 @@
             let isEditMode = false;
 
             // --- ローカルストレージからのデータ読み込み ---
+            // ※ Netlify Formsを使う場合、この部分はデータ保存の役割をしないため、
+            // ページをリロードすると初期値に戻ります。
+            // リアルタイム同期が必要な場合はFaunaなどのDBが必要です。
             function loadData() {
                 const savedData = localStorage.getItem('progressData');
                 if (savedData) {
@@ -232,15 +240,35 @@
                 updateCounts();
             }
 
-            // --- データをローカルストレージに保存 ---
-            function saveData() {
-                const data = {
-                    remainingCount: remainingCount,
-                    stepTitle: stepTitleElement.textContent,
-                    whiteSpace: stepTitleElement.style.whiteSpace
-                };
-                localStorage.setItem('progressData', JSON.stringify(data));
-                alert('変更を保存しました。');
+            // --- Netlify Formsにデータを送信 ---
+            async function saveData() {
+                const remaining = parseInt(remainingCountElement.textContent);
+                const step = stepTitleElement.textContent;
+                
+                // フォームの入力フィールドに値を設定
+                document.getElementById('form-remaining-count').value = remaining;
+                document.getElementById('form-step-title').value = step;
+                
+                // フォームを取得
+                const form = document.querySelector('form[name="progress"]');
+                const formData = new FormData(form);
+                
+                // Netlifyにフォームを送信
+                try {
+                    const response = await fetch(form.action || '/', {
+                        method: 'POST',
+                        body: new URLSearchParams(formData).toString()
+                    });
+
+                    if (response.ok) {
+                        alert('変更を保存しました。');
+                    } else {
+                        alert('保存に失敗しました。');
+                    }
+                } catch (error) {
+                    console.error('保存エラー:', error);
+                    alert('保存に失敗しました。');
+                }
             }
 
             // 表示を更新する関数
